@@ -4,7 +4,7 @@ using SpaceWeatherAPI.Net7.Models;
 
 namespace SpaceWeatherAPI.Net7.Controllers;
 
-[Route("v1/api/[controller]")]
+[Route("v1/api/satellites")]
 [ApiController]  
 public class SatelliteController : Controller
 {
@@ -13,26 +13,23 @@ public class SatelliteController : Controller
     {
         _context = context;
     }
-    // GET: api/Satellites
     [HttpGet("")]
-    public async Task<ActionResult<IEnumerable<Satellite>>> GetSatellites()
+    public async Task<ActionResult<IEnumerable<Satellite>>> GetAll()
     {
         return await _context.Satellites
             .ToListAsync();
     }
-    // POST: api/TodoItems
     [HttpPost("")]
-    public async Task<ActionResult<Satellite>> AddSatellite(Satellite satellite)
+    public async Task<ActionResult<Satellite>> Create(Satellite satellite)
     {
         _context.Satellites.Add(satellite);
         await _context.SaveChangesAsync();
 
         //    return CreatedAtAction("GetTodoItem", new { id = todoItem.Id }, todoItem);
-        return CreatedAtAction(nameof(GetSatellites), new { id =satellite.Id }, satellite);
+        return CreatedAtAction(nameof(GetById), new { id =satellite.Id }, satellite);
     }
-    // GET: api/
     [HttpGet("{id}")]
-    public async Task<ActionResult<Satellite>> GetSatelliteById(int id)
+    public async Task<ActionResult<Satellite>> GetById(int id)
     {
         var satellite = await _context.Satellites.FindAsync(id);
 
@@ -43,7 +40,7 @@ public class SatelliteController : Controller
         return satellite;
     }
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutSatellite(int id, Satellite satellite)
+    public async Task<IActionResult> Put(int id, Satellite satellite)
     {
         if (id != satellite.Id)
         {
@@ -71,7 +68,7 @@ public class SatelliteController : Controller
         return NoContent();
     }
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteSatellite(int id)
+    public async Task<IActionResult> Delete(int id)
     {
         var satellite = await _context.Satellites.FindAsync(id);
         if (satellite == null)
