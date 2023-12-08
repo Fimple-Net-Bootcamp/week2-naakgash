@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SpaceWeatherAPI.Net7.Models;
 
@@ -47,25 +48,40 @@ public class SatelliteController : Controller
             return BadRequest();
         }
 
-        _context.Entry(satellite).State = EntityState.Modified;
+        var satelliteDb = await _context.Satellites.FindAsync(id);
+        if (satelliteDb == null)
+        {
+            return NotFound();
+        }
+
+        satelliteDb.DistanceFromPlanet = satellite.DistanceFromPlanet;
+        satelliteDb.WeatherHistory = satellite.WeatherHistory;
+        satelliteDb.Radius = satellite.Radius;
+        satelliteDb.Name = satellite.Name;
+        satelliteDb.Mass = satellite.Mass;
+        satelliteDb.IsTidallyLocked = satellite.IsTidallyLocked;
 
         try
         {
             await _context.SaveChangesAsync();
         }
-        catch (DbUpdateConcurrencyException)
+        catch (DbUpdateConcurrencyException) when (!SatelliteExists(id))
         {
-            if (!SatelliteExists(id))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
+            return NotFound();
         }
 
         return NoContent();
+    }
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> Patch(int id, JsonPatchDocument<Planet> patchDoc)
+    {
+        var planetDb = await _context.Planets.FindAsync(id);
+        if (planetDb == null)
+        {
+            return NotFound();
+        }
+        patchDoc.ApplyTo(planetDb);
+        return Ok();
     }
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)

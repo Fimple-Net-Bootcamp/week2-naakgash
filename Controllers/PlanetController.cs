@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SpaceWeatherAPI.Net7.Models;
+using System.Numerics;
 
 namespace SpaceWeatherAPI.Net7.Controllers
 {
@@ -46,24 +48,41 @@ namespace SpaceWeatherAPI.Net7.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(planet).State = EntityState.Modified;
+            var planetDb = await _context.Planets.FindAsync(id);
+            if (planetDb == null)
+            {
+                return NotFound();
+            }
+
+            planetDb.DistanceFromSun = planet.DistanceFromSun;
+            planetDb.WeatherHistory = planet.WeatherHistory;
+            planetDb.Satellites = planet.Satellites;
+            planetDb.Radius = planet.Radius;
+            planetDb.HasRings = planet.HasRings;
+            planetDb.Name = planet.Name;
+            planetDb.Mass = planet.Mass;
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException) when (!PlanetExists(id))
             {
-                if (!PlanetExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
+
             return NoContent();
+        }
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Patch(int id, JsonPatchDocument<Planet> patchDoc)
+        {
+            var planetDb = await _context.Planets.FindAsync(id);
+            if (planetDb == null)
+            {
+                return NotFound();
+            }
+            patchDoc.ApplyTo(planetDb);
+            return Ok();
         }
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
